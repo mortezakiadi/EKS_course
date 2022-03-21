@@ -1,0 +1,15 @@
+kubectl edit configmap aws-auth -n kube-system -o yaml
+
+Data
+====
+mapRoles:
+----
+- rolearn: arn:aws:iam::024270670325:role/cluster-viewer
+  username: admin
+  groups:
+    - system:masters
+- groups:
+  - system:bootstrappers
+  - system:nodes
+  rolearn: arn:aws:iam::024270670325:role/MyEKSClusterNodeRole
+  username: system:node:{{EC2PrivateDNSName}}
