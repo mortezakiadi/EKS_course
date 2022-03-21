@@ -1,0 +1,42 @@
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: overprovisioning
+  namespace: kube-system
+data:
+# the 40 in the following means: if your deployment uses 4 CPU cores and you
+# want to ensure a buffer of 10% you need to set coresPerReplica to 40.
+# This just means for every 40 cores of the overall cluster size there
+# will be one replica (of 4 cores).
+  linear: |-
+    { 
+      "coresPerReplica": 40 
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: overprovisioning-autoscaler
+  namespace: kube-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: overprovisioning-autoscaler
+  template:
+    metadata:
+      labels:
+        app: overprovisioning-autoscaler
+    spec:
+      containers:
+        - image: k8s.gcr.io/cluster-proportional-autoscaler-amd64:1.1.2
+          name: autoscaler
+          command:
+            - /cluster-proportional-autoscaler
+            - --namespace=kube-system
+            - --configmap=overprovisioning
+            - --target=deployment/overprovisioning
+            - --logtostderr=true
+            - --v=2
+      serviceAccountName: cluster-proportional-autoscaler
